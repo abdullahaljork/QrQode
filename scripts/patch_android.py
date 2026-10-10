@@ -19,6 +19,8 @@ filt = '''<intent-filter>
 s = s.replace('</activity>', filt + '</activity>', 1)
 
 # أزرار الإعدادات السريعة
+META = '<meta-data android:name="com.google.mlkit.vision.DEPENDENCIES" android:value="barcode_ui" />\n    '
+
 def tile(cls, label):
     return '''<service android:name=".%s" android:label="%s"
             android:icon="@drawable/ic_tile_qr" android:exported="true"
@@ -29,7 +31,7 @@ def tile(cls, label):
         </service>
         ''' % (cls, label)
 
-s = s.replace('</application>', tile('CreateTile', 'إنشاء QR') + tile('ReadTile', 'قراءة QR') + '</application>', 1)
+s = s.replace('</application>', tile('CreateTile', 'إنشاء QR') + tile('ReadTile', 'قراءة QR') + META + '</application>', 1)
 open(mp, 'w', encoding='utf-8').write(s)
 
 jd = base + '/java/com/qrtool/app'
@@ -39,6 +41,13 @@ for f in ('BaseTile.java', 'CreateTile.java', 'ReadTile.java'):
 
 os.makedirs(base + '/res/drawable', exist_ok=True)
 shutil.copy('native/ic_tile_qr.xml', base + '/res/drawable/ic_tile_qr.xml')
+
+# ---- الماسح الأصلي يحتاج minSdk 23 ----
+vp = 'android/variables.gradle'
+if os.path.exists(vp):
+    v = open(vp, encoding='utf-8').read()
+    v = re.sub(r'minSdkVersion\s*=\s*\d+', 'minSdkVersion = 23', v)
+    open(vp, 'w', encoding='utf-8').write(v)
 
 # ---- التوقيع (شهادة ثابتة) ورقم الإصدار ----
 shutil.copy('keystore/release.jks', 'android/app/release.jks')
