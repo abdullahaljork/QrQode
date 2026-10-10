@@ -1,5 +1,6 @@
-import os, shutil
+import os, re, shutil
 
+PASS = 'vMTXJoGgXAHeDZnm99sH'
 base = 'android/app/src/main'
 mp = base + '/AndroidManifest.xml'
 s = open(mp, encoding='utf-8').read()
@@ -38,4 +39,25 @@ for f in ('BaseTile.java', 'CreateTile.java', 'ReadTile.java'):
 
 os.makedirs(base + '/res/drawable', exist_ok=True)
 shutil.copy('native/ic_tile_qr.xml', base + '/res/drawable/ic_tile_qr.xml')
+
+# ---- التوقيع (شهادة ثابتة) ورقم الإصدار ----
+shutil.copy('keystore/release.jks', 'android/app/release.jks')
+gp = 'android/app/build.gradle'
+g = open(gp, encoding='utf-8').read()
+run = os.environ.get('GITHUB_RUN_NUMBER', '1')
+g = re.sub(r'versionCode\s+\d+', 'versionCode ' + run, g)
+g = re.sub(r'versionName\s+"[^"]*"', 'versionName "1.0.' + run + '"', g)
+sign = '''signingConfigs {
+        release {
+            storeFile file("release.jks")
+            storePassword "%s"
+            keyAlias "qrtool"
+            keyPassword "%s"
+        }
+    }
+    buildTypes {''' % (PASS, PASS)
+g = g.replace('buildTypes {', sign, 1)
+i = g.index('buildTypes {')
+g = g[:i] + g[i:].replace('release {', 'release {\n            signingConfig signingConfigs.release', 1)
+open(gp, 'w', encoding='utf-8').write(g)
 print('patched')
