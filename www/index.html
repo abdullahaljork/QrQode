@@ -30,7 +30,6 @@ svg{display:block}
 .bar h2{margin:0;font-size:20px}
 .ib{width:44px;height:44px;border:0;border-radius:50%;background:var(--card);color:var(--tx);display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px #0002}
 .cw{max-width:520px;margin:auto;padding:0 16px 32px}
-.chips{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px}
 .chip{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 2px;border:1px solid var(--bd);border-radius:14px;background:var(--card);color:var(--mu);font-size:12px}
 .chip.on{background:var(--ac);border-color:var(--ac);color:#fff}
 .card{background:var(--card);border:1px solid var(--bd);border-radius:18px;padding:16px}
@@ -62,6 +61,26 @@ textarea{min-height:90px;resize:vertical}
 @keyframes up{from{transform:translateY(100%)}to{transform:none}}
 .sheet h3{margin:0 0 8px;font-size:17px;color:var(--ac)}
 #res{padding:12px;border-radius:12px;background:var(--bg);word-break:break-all;white-space:pre-wrap;direction:ltr;text-align:left;max-height:30vh;overflow:auto}
+.chips{display:flex;overflow-x:auto;gap:8px;margin-bottom:14px;padding-bottom:4px;scrollbar-width:none}
+.chip{flex:0 0 78px}
+video::-webkit-media-controls,video::-webkit-media-controls-start-playback-button,video::-webkit-media-controls-overlay-play-button{display:none!important;-webkit-appearance:none}
+#snap{position:absolute;inset:0;width:100%;height:100%;background:#000}
+.nat #vid,.nat .ttl,.nat .frame,.nat #tor{display:none}
+#start{display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:auto;margin:0;padding:16px 38px}
+.nat #start{display:block}
+.ring{position:absolute;width:76px;height:76px;margin:-38px 0 0 -38px;border:3px solid #facc15;border-radius:50%;pointer-events:none;animation:rg .6s ease forwards}
+@keyframes rg{from{transform:scale(1.6);opacity:1}to{transform:scale(1);opacity:0}}
+.rw{display:flex;flex-direction:column;gap:2px;padding:8px 0;border-bottom:1px solid var(--bd)}
+.rw span{font-size:12px;color:var(--mu)}
+.rw b{font-weight:600;word-break:break-all;direction:ltr;text-align:left;white-space:pre-wrap}
+#rows{max-height:30vh;overflow:auto}
+#toast{position:fixed;bottom:calc(env(safe-area-inset-bottom) + 120px);left:50%;transform:translateX(-50%);background:#000c;color:#fff;padding:10px 18px;border-radius:20px;z-index:30;font-size:14px}
+.seg{display:flex;gap:6px;margin-top:10px}
+.seg button{flex:1;padding:10px;border:1px solid var(--bd);border-radius:12px;background:transparent;color:var(--mu)}
+.seg button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+html.bsa,html.bsa body{background:transparent!important}
+#read.cx{background:transparent}
+.cx #vid,.cx #snap{display:none}
 </style>
 </head>
 <body>
@@ -83,7 +102,11 @@ textarea{min-height:90px;resize:vertical}
       <button class="chip" data-t="web"><i data-i="web"></i>موقع</button>
       <button class="chip" data-t="wa"><i data-i="wa"></i>واتساب</button>
       <button class="chip" data-t="contact"><i data-i="contact"></i>جهة اتصال</button>
+      <button class="chip" data-t="wifi"><i data-i="wifi"></i>واي فاي</button>
       <button class="chip" data-t="mail"><i data-i="mail"></i>بريد</button>
+      <button class="chip" data-t="call"><i data-i="phone"></i>اتصال</button>
+      <button class="chip" data-t="sms"><i data-i="sms"></i>SMS</button>
+      <button class="chip" data-t="geo"><i data-i="pin"></i>موقع جغرافي</button>
     </div>
     <div class="card">
       <div id="f-text" class="f"><textarea id="i-text" placeholder="اكتب النص أو الرمز..."></textarea></div>
@@ -103,7 +126,19 @@ textarea{min-height:90px;resize:vertical}
         <input id="m-sub" placeholder="الموضوع (اختياري)">
         <textarea id="m-body" placeholder="نص الرسالة (اختياري)"></textarea>
       </div>
-      <div class="row">
+      <div id="f-wifi" class="f hide">
+        <input id="w-ssid" class="ltr" placeholder="اسم الشبكة (SSID)">
+        <input id="w-pass" class="ltr" placeholder="كلمة السر">
+        <div class="seg" id="wseg"><button class="on" data-s="WPA">WPA / WPA2</button><button data-s="WEP">WEP</button><button data-s="nopass">بدون</button></div>
+      </div>
+      <div id="f-call" class="f hide"><input id="t-num" class="ltr" placeholder="رقم الهاتف" inputmode="tel"></div>
+      <div id="f-sms" class="f hide">
+        <input id="s-num" class="ltr" placeholder="رقم الهاتف" inputmode="tel">
+        <textarea id="s-msg" placeholder="نص الرسالة (اختياري)"></textarea>
+      </div>
+      <div id="f-geo" class="f hide"><input id="g-ll" class="ltr" placeholder="33.5138, 36.2765" inputmode="decimal"></div>
+      
+<div class="row">
         <button class="btn sec" id="logoBtn">إضافة لوغو (اختياري)</button>
         <button class="btn sec hide" id="logoDel" style="width:auto">حذف</button>
       </div>
@@ -119,24 +154,27 @@ textarea{min-height:90px;resize:vertical}
 
 <!-- القراءة -->
 <div id="read" class="screen hide">
-  <video id="vid" playsinline muted></video>
+  <video id="vid" playsinline muted autoplay poster="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"></video>
+  <canvas id="snap" class="hide"></canvas>
   <button class="ib" id="rback" data-back><i data-i="back"></i></button>
   <div class="ttl">البحث عن QR code</div>
   <div class="frame"><i></i><i></i><i></i><i></i></div>
   <div id="cmsg"></div>
+  <button class="btn" id="start">ابدأ المسح</button>
   <button class="rb" id="gal"><i data-i="gallery" data-s="30"></i></button>
   <button class="rb" id="tor"><i data-i="torch" data-s="30"></i></button>
   <input type="file" id="file" accept="image/*" class="hide">
   <div class="sheet hide" id="sheet">
     <h3 id="rtype"></h3>
-    <div id="res"></div>
-    <button class="btn" id="open">فتح</button>
+    <div id="rows"></div>
+    <div id="acts"></div>
     <div class="row">
-      <button class="btn sec" id="copy">نسخ</button>
+      <button class="btn sec" id="copy">نسخ الكل</button>
       <button class="btn sec" id="again">مسح جديد</button>
     </div>
   </div>
 </div>
+<div id="toast" class="hide"></div>
 
 <script>
 const $=id=>document.getElementById(id);
@@ -150,7 +188,11 @@ const I={
  contact:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>',
  mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
  gallery:'<rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/>',
- torch:'<path d="M9 2h6v4l-1.5 3v12h-3V9L9 6z"/><path d="M12 11v2"/>'
+ torch:'<path d="M9 2h6v4l-1.5 3v12h-3V9L9 6z"/><path d="M12 11v2"/>',
+ wifi:'<path d="M2 9a15 15 0 0 1 20 0M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0"/><circle cx="12" cy="19.5" r="1"/>',
+ phone:'<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/>',
+ sms:'<rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21l3-4M8 9h8M8 12h5"/>',
+ pin:'<path d="M12 21s7-6.5 7-12a7 7 0 0 0-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/>'
 };
 document.querySelectorAll('[data-i]').forEach(e=>{
   const s=e.dataset.s||22;
@@ -159,11 +201,11 @@ document.querySelectorAll('[data-i]').forEach(e=>{
 if(qrcode.stringToBytesFuncs&&qrcode.stringToBytesFuncs['UTF-8'])qrcode.stringToBytes=qrcode.stringToBytesFuncs['UTF-8'];
 
 // ---------- التنقل ----------
-let cur=0,stream=null,raf=null,scanning=false,torchOn=false,logo=null,curType='text',last='';
+let cur=0,stream=null,raf=null,scanning=false,torchOn=false,logo=null,curType='text',last='',wsec='WPA';
 function go(n,push){
   cur=n;
   ['home','create','read'].forEach((s,i)=>$(s).classList.toggle('hide',i!==n));
-  if(n===2)startCam();else stopCam();
+  if(n===2)startRead();else stopCam();
   if(n&&push!==false)history.pushState({n},'');
 }
 $('goC').onclick=()=>go(1);
@@ -210,6 +252,10 @@ function payload(){
     if(!name&&!ph)return '';
     return ['BEGIN:VCARD','VERSION:3.0','FN:'+name,'N:;'+name+';;;',ph&&'TEL:'+ph,em&&'EMAIL:'+em,org&&'ORG:'+org,'END:VCARD'].filter(Boolean).join('\n');
   }
+  if(t==='wifi'){const s=g('w-ssid');if(!s)return '';const e=x=>x.replace(/([\\;,:"])/g,'\\$1');return 'WIFI:T:'+wsec+';S:'+e(s)+';'+(wsec==='nopass'?'':'P:'+e($('w-pass').value)+';')+';';}
+  if(t==='call'){const n=g('t-num').replace(/[^\d+]/g,'');return n?'tel:'+n:'';}
+  if(t==='sms'){const n=g('s-num').replace(/[^\d+]/g,'');return n?'smsto:'+n+':'+g('s-msg'):'';}
+  if(t==='geo'){const m=g('g-ll').match(/(-?\d+(?:\.\d+)?)\s*[, ]\s*(-?\d+(?:\.\d+)?)/);return m?'geo:'+m[1]+','+m[2]:'';}
   const to=g('m-to');if(!to)return '';
   const q=[];
   if(g('m-sub'))q.push('subject='+encodeURIComponent(g('m-sub')));
@@ -254,16 +300,80 @@ $('dl').onclick=async()=>{
 
 // ---------- القراءة ----------
 const cv=document.createElement('canvas'),cx=cv.getContext('2d',{willReadFrequently:true});
-function decode(d,w,h,both){
-  const r=jsQR(d,w,h,{inversionAttempts:both?'attemptBoth':'dontInvert'});
-  return r?r.data:null;
+const NB=()=>{const C=window.Capacitor;return C&&C.isNativePlatform&&C.isNativePlatform()&&C.Plugins&&C.Plugins.BarcodeScanner;};
+const toast=m=>{const t=$('toast');t.textContent=m;t.classList.remove('hide');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.add('hide'),2200);};
+const copy=t=>{if(navigator.clipboard)navigator.clipboard.writeText(t);toast('تم النسخ');};
+const decode=(d,w,h,both)=>jsQR(d,w,h,{inversionAttempts:both?'attemptBoth':'dontInvert'});
+
+let cxActive=false,cxL=[];
+const msgOf=e=>String((e&&e.message)||e||'');
+async function camX(B){
+  const p=await B.requestPermissions();
+  if(p.camera!=='granted'&&p.camera!=='limited')throw new Error('إذن الكاميرا مرفوض');
+  const onCode=async r=>{
+    const v=r&&(r.barcode||(r.barcodes&&r.barcodes[0]));
+    if(!v||!cxActive)return;
+    await camXStop(B);
+    if(navigator.vibrate)navigator.vibrate(80);
+    show(v.rawValue||v.displayValue||'');
+  };
+  cxL=[await B.addListener('barcodeScanned',onCode),await B.addListener('barcodesScanned',onCode)];
+  cxActive=true;
+  document.documentElement.classList.add('bsa');$('read').classList.add('cx');
+  await B.startScan();
 }
+async function camXStop(B){
+  if(!cxActive)return;cxActive=false;
+  document.documentElement.classList.remove('bsa');$('read').classList.remove('cx');
+  try{cxL.forEach(l=>l.remove());}catch(e){}cxL=[];
+  try{await B.stopScan();}catch(e){}
+  $('tor').classList.remove('on');
+}
+// 1) ماسح جوجل الأصلي  2) كاميرا أصلية (CameraX) مع فلاش  3) كاميرا الويب
+async function startRead(){
+  $('sheet').classList.add('hide');$('snap').classList.add('hide');$('cmsg').textContent='';
+  const B=NB();let why='';
+  if(B){
+    $('read').classList.add('nat');$('start').classList.remove('hide');
+    try{
+      let a={available:true};
+      try{a=await B.isGoogleBarcodeScannerModuleAvailable();}catch(e){}
+      if(!a.available){
+        $('cmsg').textContent='جاري تجهيز الماسح (مرة وحدة فقط)...';
+        await new Promise((ok,no)=>{
+          B.addListener('googleBarcodeScannerModuleInstallProgress',e=>{if(e.state===4)ok();else if(e.state===5||e.state===3)no(new Error('install'));});
+          B.installGoogleBarcodeScannerModule().catch(no);
+        });
+        $('cmsg').textContent='';
+      }
+      const r=await B.scan({autoZoom:true});
+      const v=r&&r.barcodes&&r.barcodes[0];
+      if(v){if(navigator.vibrate)navigator.vibrate(80);show(v.rawValue||v.displayValue||'');}
+      return;
+    }catch(e){
+      $('cmsg').textContent='';
+      if(/cancel/i.test(msgOf(e)))return;
+      why='جوجل: '+msgOf(e);
+    }
+    $('read').classList.remove('nat');$('start').classList.add('hide');
+    try{await camX(B);return;}
+    catch(e){why+=' | كاميرا: '+msgOf(e);await camXStop(B);}
+  }
+  $('read').classList.remove('nat');
+  startCam();
+  if(why){$('cmsg').textContent='تعذّر الماسح الأصلي: '+why;setTimeout(()=>{if($('cmsg').textContent.startsWith('تعذّر'))$('cmsg').textContent='';},9000);}
+}
+$('start').onclick=startRead;
+
 async function startCam(){
-  $('sheet').classList.add('hide');$('cmsg').textContent='';
   try{
-    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280}},audio:false});
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},audio:false});
   }catch(e){$('cmsg').textContent='ما قدرت أفتح الكاميرا. فعّل إذن الكاميرا من إعدادات التطبيق.';return;}
   if(cur!==2){stream.getTracks().forEach(t=>t.stop());stream=null;return;}
+  try{
+    const tr=stream.getVideoTracks()[0],c=tr.getCapabilities?tr.getCapabilities():null;
+    if(c&&c.focusMode&&c.focusMode.includes('continuous'))await tr.applyConstraints({advanced:[{focusMode:'continuous'}]});
+  }catch(e){}
   const v=$('vid');v.srcObject=stream;
   try{await v.play();}catch(e){}
   scanning=true;loop();
@@ -272,8 +382,9 @@ function stopCam(){
   scanning=false;
   if(raf)cancelAnimationFrame(raf);raf=null;
   if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}
-  $('vid').srcObject=null;
+  $('vid').srcObject=null;$('snap').classList.add('hide');
   torchOn=false;$('tor').classList.remove('on');
+  if(cxActive&&NB())camXStop(NB());
 }
 function loop(){
   if(!scanning||!stream)return;
@@ -282,55 +393,133 @@ function loop(){
     const sc=Math.min(1,640/v.videoWidth);
     cv.width=Math.round(v.videoWidth*sc);cv.height=Math.round(v.videoHeight*sc);
     cx.drawImage(v,0,0,cv.width,cv.height);
-    const t=decode(cx.getImageData(0,0,cv.width,cv.height).data,cv.width,cv.height,false);
-    if(t){scanning=false;if(navigator.vibrate)navigator.vibrate(80);show(t);return;}
+    const r=decode(cx.getImageData(0,0,cv.width,cv.height).data,cv.width,cv.height,false);
+    if(r){
+      scanning=false;
+      snapDraw(v,v.videoWidth,v.videoHeight,r.location,1/sc,'cover');
+      setTimeout(()=>{if(navigator.vibrate)navigator.vibrate(80);show(r.data);},650);
+      return;
+    }
   }
   raf=requestAnimationFrame(loop);
 }
+// يجمّد اللقطة ويرسم إطار أخضر حول الباركود اللي لقاه
+function snapDraw(src,w,h,loc,k,fit){
+  const c=$('snap');c.width=w;c.height=h;c.style.objectFit=fit;c.classList.remove('hide');
+  const x=c.getContext('2d');x.drawImage(src,0,0,w,h);
+  const P=[loc.topLeftCorner,loc.topRightCorner,loc.bottomRightCorner,loc.bottomLeftCorner];
+  x.beginPath();P.forEach((p,i)=>i?x.lineTo(p.x*k,p.y*k):x.moveTo(p.x*k,p.y*k));x.closePath();
+  x.fillStyle='rgba(34,197,94,.28)';x.fill();
+  x.lineWidth=Math.max(4,w/90);x.strokeStyle='#22c55e';x.lineJoin='round';x.stroke();
+}
+// لمسة على الشاشة = فوكس
+$('read').addEventListener('click',e=>{
+  if($('read').classList.contains('nat')||!stream||!scanning||e.target.closest('button'))return;
+  const r=document.createElement('div');r.className='ring';r.style.left=e.clientX+'px';r.style.top=e.clientY+'px';
+  $('read').append(r);setTimeout(()=>r.remove(),650);
+  const tr=stream.getVideoTracks()[0];
+  try{tr.applyConstraints({advanced:[{focusMode:'single-shot'}]}).then(()=>setTimeout(()=>tr.applyConstraints({advanced:[{focusMode:'continuous'}]}).catch(()=>{}),900)).catch(()=>{});}catch(x){}
+});
 $('tor').onclick=async()=>{
-  const tr=stream&&stream.getVideoTracks()[0];
-  if(!tr)return;
+  const B=NB();
+  if(cxActive&&B){
+    try{
+      const a=await B.isTorchAvailable();
+      if(!a.available){toast('الفلاش غير متوفر على هالجهاز');return;}
+      await B.toggleTorch();
+      const e=await B.isTorchEnabled();
+      $('tor').classList.toggle('on',!!e.enabled);
+    }catch(e){toast('تعذّر تشغيل الفلاش');}
+    return;
+  }
+  const tr=stream&&stream.getVideoTracks()[0];if(!tr)return;
   const caps=tr.getCapabilities?tr.getCapabilities():{};
-  if(!caps.torch){$('cmsg').textContent='الفلاش غير مدعوم على هالجهاز.';setTimeout(()=>$('cmsg').textContent='',2500);return;}
-  try{
-    torchOn=!torchOn;
-    await tr.applyConstraints({advanced:[{torch:torchOn}]});
-    $('tor').classList.toggle('on',torchOn);
-  }catch(e){torchOn=false;}
+  if(!caps.torch){toast('الفلاش غير مدعوم على هالجهاز');return;}
+  try{torchOn=!torchOn;await tr.applyConstraints({advanced:[{torch:torchOn}]});$('tor').classList.toggle('on',torchOn);}catch(e){torchOn=false;}
 };
-function kind(t){
-  if(/^BEGIN:VCARD/i.test(t))return 'جهة اتصال';
-  if(/^mailto:/i.test(t))return 'بريد إلكتروني';
-  if(/^tel:/i.test(t))return 'رقم هاتف';
-  if(/wa\.me|whatsapp/i.test(t))return 'رابط واتساب';
-  if(/^https?:\/\//i.test(t))return 'رابط';
-  return 'نص';
+
+// ---------- تحليل النتيجة ----------
+function parse(t){
+  const o={k:'نص',rows:[['المحتوى',t]],act:[]},to=u=>()=>{location.href=u;},web=u=>()=>window.open(u,'_blank');
+  let m;
+  if(/^WIFI:/i.test(t)){
+    const f={};
+    t.slice(5).split(/(?<!\\);/).forEach(s=>{const i=s.indexOf(':');if(i>0)f[s.slice(0,i).toUpperCase()]=s.slice(i+1).replace(/\\(.)/g,'$1');});
+    o.k='شبكة واي فاي';o.rows=[['اسم الشبكة',f.S||''],['كلمة السر',f.P||'بدون'],['التشفير',f.T||'بدون']];
+    if(f.P)o.act.push({l:'نسخ كلمة السر',f:()=>copy(f.P)});
+    o.act.push({l:'نسخ اسم الشبكة',f:()=>copy(f.S||'')});
+  }else if(/^BEGIN:VCARD/i.test(t)){
+    const g=k=>{const r=t.match(new RegExp('^'+k+'[^:\\n]*:(.*)$','im'));return r?r[1].trim():'';};
+    const n=g('FN')||g('N').replace(/;/g,' ').trim(),tel=g('TEL'),em=g('EMAIL'),org=g('ORG');
+    o.k='جهة اتصال';o.rows=[['الاسم',n],tel&&['الهاتف',tel],em&&['البريد',em],org&&['الجهة',org]].filter(Boolean);
+    o.act.push({l:'حفظ في جهات الاتصال',f:()=>saveVcf(t)});
+    if(tel)o.act.push({l:'اتصال',f:to('tel:'+tel)});
+    if(em)o.act.push({l:'إرسال بريد',f:to('mailto:'+em)});
+  }else if(m=t.match(/^(?:smsto|sms):([^:?]*)[:?](?:body=)?([\s\S]*)$/i)){
+    o.k='رسالة SMS';o.rows=[['الرقم',m[1]],['الرسالة',m[2]]];
+    o.act.push({l:'فتح الرسائل',f:to('sms:'+m[1]+(m[2]?'?body='+encodeURIComponent(m[2]):''))});
+  }else if(/^geo:/i.test(t)){
+    o.k='موقع جغرافي';o.rows=[['الإحداثيات',t.slice(4).split('?')[0]]];o.act.push({l:'فتح بالخرائط',f:to(t)});
+  }else if(/^tel:/i.test(t)){
+    o.k='رقم هاتف';o.rows=[['الرقم',t.slice(4)]];o.act.push({l:'اتصال',f:to(t)});
+  }else if(/^mailto:/i.test(t)){
+    let u;try{u=new URL(t);}catch(e){u=null;}
+    if(u){o.k='بريد إلكتروني';o.rows=[['إلى',decodeURIComponent(u.pathname)],u.searchParams.get('subject')&&['الموضوع',u.searchParams.get('subject')],u.searchParams.get('body')&&['النص',u.searchParams.get('body')]].filter(Boolean);o.act.push({l:'فتح البريد',f:to(t)});}
+  }else if(m=t.match(/^https?:\/\/(?:wa\.me\/|api\.whatsapp\.com\/send\?phone=)(\d+)(?:[?&]text=([^&]*))?/i)){
+    o.k='واتساب';o.rows=[['الرقم','+'+m[1]],m[2]&&['الرسالة',decodeURIComponent(m[2])]].filter(Boolean);o.act.push({l:'فتح واتساب',f:web(t)});
+  }else if(/^https?:\/\//i.test(t)){
+    o.k='رابط';o.act.push({l:'فتح الرابط',f:web(t)});
+  }
+  return o;
+}
+async function saveVcf(t){
+  const C=window.Capacitor;
+  try{
+    if(C&&C.isNativePlatform&&C.isNativePlatform()){
+      const r=await C.Plugins.Filesystem.writeFile({path:'contact.vcf',data:t,directory:'CACHE',encoding:'utf8'});
+      await C.Plugins.Share.share({title:'جهة اتصال',url:r.uri});return;
+    }
+  }catch(e){}
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([t],{type:'text/vcard'}));a.download='contact.vcf';
+  document.body.appendChild(a);a.click();a.remove();
 }
 function show(t){
-  last=t;
-  $('rtype').textContent=kind(t);
-  $('res').textContent=t;
-  const k=kind(t);
-  $('open').classList.toggle('hide',!/^(https?:\/\/|mailto:|tel:)/i.test(t));
-  $('open').textContent=k==='بريد إلكتروني'?'فتح البريد':k==='رقم هاتف'?'اتصال':k==='رابط واتساب'?'فتح واتساب':'فتح الرابط';
+  last=t;const p=parse(t);
+  $('start').classList.add('hide');
+  $('rtype').textContent=p.k;
+  const R=$('rows');R.innerHTML='';
+  p.rows.forEach(([a,b])=>{const d=document.createElement('div');d.className='rw';const s=document.createElement('span');s.textContent=a;const e=document.createElement('b');e.textContent=b;d.append(s,e);R.append(d);});
+  const A=$('acts');A.innerHTML='';
+  p.act.forEach((a,i)=>{const b=document.createElement('button');b.className='btn'+(i?' sec':'');b.textContent=a.l;b.onclick=a.f;A.append(b);});
   $('sheet').classList.remove('hide');
 }
-$('again').onclick=()=>{$('sheet').classList.add('hide');if(stream){scanning=true;loop();}else startCam();};
-$('copy').onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText(last);$('copy').textContent='تم النسخ ✓';setTimeout(()=>$('copy').textContent='نسخ',1500);};
-$('open').onclick=()=>{/^(mailto:|tel:)/i.test(last)?location.href=last:window.open(last,'_blank');};
+$('copy').onclick=()=>copy(last);
+$('again').onclick=()=>{
+  $('sheet').classList.add('hide');$('snap').classList.add('hide');
+  if(NB()){startRead();}else if(stream){scanning=true;loop();}else startCam();
+};
 $('gal').onclick=()=>$('file').click();
 $('file').onchange=e=>{
   const f=e.target.files[0];if(!f)return;
   const img=new Image();
-  img.onload=()=>{
-    const c=document.createElement('canvas');c.width=img.width;c.height=img.height;
-    const x=c.getContext('2d');x.drawImage(img,0,0);
-    const t=decode(x.getImageData(0,0,c.width,c.height).data,c.width,c.height,true);
-    if(t){scanning=false;show(t);}
-    else{$('cmsg').textContent='ما لقيت QR بالصورة.';setTimeout(()=>$('cmsg').textContent='',2500);}
+  img.onload=async()=>{
+    const sc=Math.min(1,1600/Math.max(img.width,img.height));
+    const c=document.createElement('canvas');c.width=Math.round(img.width*sc);c.height=Math.round(img.height*sc);
+    const x=c.getContext('2d');x.drawImage(img,0,0,c.width,c.height);
+    const r=decode(x.getImageData(0,0,c.width,c.height).data,c.width,c.height,true);
+    if(r){
+      scanning=false;$('sheet').classList.add('hide');$('start').classList.add('hide');
+      await camXStop(NB());
+      snapDraw(c,c.width,c.height,r.location,1,'contain');
+      setTimeout(()=>show(r.data),900);
+    }else toast('ما لقيت QR بالصورة');
   };
   img.src=URL.createObjectURL(f);e.target.value='';
 };
+document.querySelectorAll('#wseg button').forEach(b=>b.onclick=()=>{
+  wsec=b.dataset.s;
+  document.querySelectorAll('#wseg button').forEach(x=>x.classList.toggle('on',x===b));
+});
 </script>
 </body>
 </html>
