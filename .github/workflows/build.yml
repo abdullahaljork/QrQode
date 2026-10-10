@@ -1,0 +1,33 @@
+name: Build APK
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - run: npm install
+      - run: npx cap add android
+      - name: Patch Android (camera, tiles)
+        run: python3 scripts/patch_android.py
+      - name: App icon
+        run: |
+          npm i --no-save @capacitor/assets
+          npx capacitor-assets generate --android --iconBackgroundColor '#2563eb' --iconBackgroundColorDark '#2563eb'
+      - run: npx cap sync android
+      - name: Build signed APK
+        working-directory: android
+        run: ./gradlew assembleRelease
+      - uses: actions/upload-artifact@v4
+        with:
+          name: qr-tool-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
